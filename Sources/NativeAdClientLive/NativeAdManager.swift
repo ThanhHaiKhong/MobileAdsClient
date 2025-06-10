@@ -25,9 +25,7 @@ extension NativeAdManager {
 					   from viewController: UIViewController?,
 					   options: [NativeAdClient.AnyAdLoaderOption]?,
 					   timeout: TimeInterval = 10) async throws -> NativeAd {
-		
 		return try await withCheckedThrowingContinuation { continuation in
-			
 			let requestID = UUID()
 			let request = Request()
 			
@@ -123,7 +121,6 @@ extension NativeAdManager: NativeAdLoaderDelegate {
 			}
 		}
 		
-		// Find matching context
 		queue.async {
 			let matchingRequest = self.pendingRequests.first { $0.value.adLoader === adLoader }
 			if let (id, _) = matchingRequest {
@@ -133,7 +130,6 @@ extension NativeAdManager: NativeAdLoaderDelegate {
 	}
 	
 	public func adLoader(_ adLoader: AdLoader, didFailToReceiveAdWithError error: Error) {
-		// Find matching context
 		queue.async {
 			let matchingRequest = self.pendingRequests.first { $0.value.adLoader === adLoader }
 			if let (id, _) = matchingRequest {
