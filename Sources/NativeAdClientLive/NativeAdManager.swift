@@ -110,6 +110,9 @@ extension NativeAdManager {
 extension NativeAdManager: NativeAdLoaderDelegate {
 	
 	public func adLoader(_ adLoader: AdLoader, didReceive nativeAd: NativeAd) {
+		#if DEBUG
+		print("🖼️ Received native ad for ID:\(adLoader.adUnitID)")
+		#endif
 		let adUnitID = adLoader.adUnitID
 		nativeAd.delegate = self
 		
