@@ -68,9 +68,10 @@ extension Effect {
 // MARK: - ItemWithAdReducer
 
 @Reducer
-public struct ItemWithAdReducer<Content: TCAInitializableReducer, Ad: TCAInitializableReducer>
+public struct ItemWithAdReducer<Content: TCAInitializableReducer & Sendable, Ad: TCAInitializableReducer & Sendable>
 where Content.State: Identifiable, Content.State: Sendable,
-	  Ad.State: Identifiable, Ad.State: Sendable {
+	  Ad.State: Identifiable, Ad.State: Sendable,
+	  Content.Action: Sendable, Ad.Action: Sendable {
     
     @ObservableState
     public enum State: Identifiable {
