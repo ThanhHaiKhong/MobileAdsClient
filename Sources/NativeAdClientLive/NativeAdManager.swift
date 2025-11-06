@@ -42,8 +42,9 @@ extension NativeAdManager {
 			adLoader.delegate = self
 			
 			let timeoutTask = DispatchWorkItem { [weak self] in
-				self?.queue.async(flags: .barrier) {
-					guard let context = self?.pendingRequests.removeValue(forKey: requestID) else { return }
+				guard let self = self else { return }
+				self.queue.async(flags: .barrier) {
+					guard let context = self.pendingRequests.removeValue(forKey: requestID) else { return }
 					context.continuation.resume(throwing: NSError(
 						domain: "NativeAdManager",
 						code: -1001,
@@ -155,13 +156,13 @@ extension NativeAdManager: NativeAdDelegate {
 
 // MARK: - Request Context
 
-private final class AdRequestContext {
+private final class AdRequestContext: @unchecked Sendable {
 	let id: UUID
 	let adUnitID: String
 	let adLoader: AdLoader
 	let continuation: CheckedContinuation<NativeAd, Error>
 	let timeoutTask: DispatchWorkItem
-	
+
 	init(id: UUID,
 		 adUnitID: String,
 		 adLoader: AdLoader,
