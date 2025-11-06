@@ -81,19 +81,35 @@ extension Array where Element == MobileAdsClient.AdRule {
 		// Higher priority rules are more likely to fail fast
 		let sortedRules = self.sorted { $0.priority > $1.priority }
 
-		return await withTaskGroup(of: Bool.self) { group in
-			for rule in sortedRules {
+		return await withTaskGroup(of: (index: Int, result: Bool).self) { group in
+			var nextIndex = 0
+			let batchSize = Swift.min(3, sortedRules.count) // Process rules in small batches
+
+			// Add initial batch
+			for i in 0..<batchSize {
 				group.addTask {
-					await rule.evaluate()
+					(index: i, result: await sortedRules[i].evaluate())
 				}
 			}
+			nextIndex = batchSize
 
-			for await result in group {
+			for await (_, result) in group {
 				if !result {
+					// Rule failed - cancel all and return false
 					group.cancelAll()
 					return false
 				}
+
+				// Rule passed - add next rule if available
+				if nextIndex < sortedRules.count {
+					let currentIndex = nextIndex
+					group.addTask {
+						(index: currentIndex, result: await sortedRules[currentIndex].evaluate())
+					}
+					nextIndex += 1
+				}
 			}
+
 			return true
 		}
 	}

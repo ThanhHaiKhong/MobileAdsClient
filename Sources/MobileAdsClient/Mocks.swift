@@ -19,7 +19,7 @@ extension MobileAdsClient: TestDependencyKey {
         return Self(
             requestTrackingAuthorizationIfNeeded: { },
             shouldShowAd: { _, _ in true },
-            showAd: { }
+            showAd: { _ in }
         )
     }()
 
@@ -27,7 +27,7 @@ extension MobileAdsClient: TestDependencyKey {
         return Self(
             requestTrackingAuthorizationIfNeeded: { },
             shouldShowAd: { _, _ in true },
-            showAd: {
+            showAd: { _ in
                 // Simulate ad display delay for previews
                 try await Task.sleep(nanoseconds: 1_000_000_000)
             }

@@ -12,7 +12,7 @@ import UIKit
 public struct MobileAdsClient: Sendable {
     public var requestTrackingAuthorizationIfNeeded: @Sendable () async -> Void
 	public var shouldShowAd: @Sendable (_ adType: MobileAdsClient.AdType, _ rules: [MobileAdsClient.AdRule]) async -> Bool = { _, _ in false }
-    public var showAd: @Sendable () async throws -> Void
+    public var showAd: @Sendable (_ adType: MobileAdsClient.AdType) async throws -> Void
 }
 
 extension Effect {
@@ -34,11 +34,9 @@ extension Effect {
                         let adManager = DependencyValues._current.mobileAdsClient
 						if await adManager.shouldShowAd(adType, rules) {
 							await adManager.requestTrackingAuthorizationIfNeeded()
-							try await adManager.showAd()
-							try await operation(send)
-						} else {
-							try await operation(send)
+							try await adManager.showAd(adType)
 						}
+						try await operation(send)
                     } catch is CancellationError {
                         return
                     } catch {
@@ -46,7 +44,7 @@ extension Effect {
                             reportIssue(
                                 """
                                 An "Effect.runWithAdCheck" returned from "\(fileID):\(line)" threw an unhandled error. …
-                                
+
                                 All non-cancellation errors must be explicitly handled via the "catch" parameter \
                                 on "Effect.runWithAdCheck", or via a "do" block.
                                 """,
@@ -146,6 +144,7 @@ extension ItemWithAdReducer: Sendable where Content: Sendable, Ad: Sendable { }
 // MARK: - UI Helpers
 
 #if canImport(UIKit)
+@MainActor
 extension UIApplication {
     public func topViewController(controller: UIViewController? = nil) -> UIViewController? {
         let controller = controller ?? keyWindow?.rootViewController

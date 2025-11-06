@@ -18,17 +18,17 @@ extension MobileAdsClient: DependencyKey {
                     return
                 }
 
-                return await withCheckedContinuation { continuation in
-                    ATTrackingManager.requestTrackingAuthorization { status in
+                await withCheckedContinuation { continuation in
+                    ATTrackingManager.requestTrackingAuthorization { _ in
                         continuation.resume(returning: ())
                     }
                 }
             },
             shouldShowAd: { adType, rules in
-                return await AdsManager.shared.shouldShowAd(adType, rules: rules)
+                await AdsManager.shared.shouldShowAd(adType, rules: rules)
             },
-            showAd: {
-                try await AdsManager.shared.showAd()
+            showAd: { adType in
+                try await AdsManager.shared.showAd(adType)
             }
         )
     }()

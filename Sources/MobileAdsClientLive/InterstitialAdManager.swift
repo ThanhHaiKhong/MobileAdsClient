@@ -10,11 +10,42 @@ import GoogleMobileAds
 import MobileAdsClient
 
 final internal class InterstitialAdManager: NSObject, @unchecked Sendable {
+    private let lock = NSLock()
     private var interstitials: [String: InterstitialAd] = [:]
     private var dismissContinuations: [String: CheckedContinuation<Void, Error>] = [:]
-    
+
     override init() {
         super.init()
+    }
+
+    private func getInterstitial(for adUnitID: String) -> InterstitialAd? {
+        lock.lock()
+        defer { lock.unlock() }
+        return interstitials[adUnitID]
+    }
+
+    private func setInterstitial(_ ad: InterstitialAd, for adUnitID: String) {
+        lock.lock()
+        defer { lock.unlock() }
+        interstitials[adUnitID] = ad
+    }
+
+    private func removeInterstitial(for adUnitID: String) {
+        lock.lock()
+        defer { lock.unlock() }
+        interstitials.removeValue(forKey: adUnitID)
+    }
+
+    private func setContinuation(_ continuation: CheckedContinuation<Void, Error>, for adUnitID: String) {
+        lock.lock()
+        defer { lock.unlock() }
+        dismissContinuations[adUnitID] = continuation
+    }
+
+    private func removeContinuation(for adUnitID: String) -> CheckedContinuation<Void, Error>? {
+        lock.lock()
+        defer { lock.unlock() }
+        return dismissContinuations.removeValue(forKey: adUnitID)
     }
 }
 
@@ -22,9 +53,9 @@ final internal class InterstitialAdManager: NSObject, @unchecked Sendable {
 
 extension InterstitialAdManager {
     public func shouldShowAd(_ adUnitID: String, rules: [MobileAdsClient.AdRule]) async -> Bool {
-		let isSatisfied = await rules.allRulesSatisfied()
-		
-        if interstitials[adUnitID] == nil {
+        let isSatisfied = await rules.allRulesSatisfied()
+
+        if getInterstitial(for: adUnitID) == nil {
             do {
                 try await loadAd(adUnitID: adUnitID)
                 #if DEBUG
@@ -38,18 +69,18 @@ extension InterstitialAdManager {
                 return false
             }
         }
-        
+
         return isSatisfied
     }
-    
+
     @MainActor
     public func showAd(_ adUnitID: String, from viewController: UIViewController) async throws {
-        guard let ad = interstitials[adUnitID] else {
+        guard let ad = getInterstitial(for: adUnitID) else {
             throw MobileAdsClient.AdError.adNotReady
         }
-        
+
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            dismissContinuations[adUnitID] = continuation
+            setContinuation(continuation, for: adUnitID)
             ad.present(from: viewController)
         }
     }
@@ -70,35 +101,35 @@ extension InterstitialAdManager {
                 }
             }
         }
-        interstitials.removeValue(forKey: adUnitID)
-        interstitials[adUnitID] = ad
+        setInterstitial(ad, for: adUnitID)
     }
 }
 
 // MARK: - FullScreenContentDelegate
 
 extension InterstitialAdManager: FullScreenContentDelegate {
-    
+    private func findAdUnitID(for ad: FullScreenPresentingAd) -> String? {
+        lock.lock()
+        defer { lock.unlock() }
+        return interstitials.first(where: { $0.value === ad })?.key
+    }
+
     @objc
     func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
-        for (adUnitID, storedAd) in interstitials where storedAd === ad {
-            dismissContinuations[adUnitID]?.resume(returning: ())
-            dismissContinuations.removeValue(forKey: adUnitID)
-            
-            Task {
-                try? await loadAd(adUnitID: adUnitID)
-            }
-            break
+        guard let adUnitID = findAdUnitID(for: ad) else { return }
+
+        removeContinuation(for: adUnitID)?.resume(returning: ())
+
+        Task {
+            try? await loadAd(adUnitID: adUnitID)
         }
     }
-    
+
     @objc
     func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
-        for (adUnitID, storedAd) in interstitials where storedAd === ad {
-            dismissContinuations[adUnitID]?.resume(throwing: error)
-            dismissContinuations.removeValue(forKey: adUnitID)
-            break
-        }
+        guard let adUnitID = findAdUnitID(for: ad) else { return }
+
+        removeContinuation(for: adUnitID)?.resume(throwing: error)
     }
 }
 
