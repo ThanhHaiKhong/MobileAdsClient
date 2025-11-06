@@ -22,10 +22,12 @@ final internal class NativeAdManager: NSObject, @unchecked Sendable {
 
 extension NativeAdManager {
 	
-	public func loadAd(adUnitID: String,
-					   from viewController: UIViewController?,
-					   options: [NativeAdClient.AnyAdLoaderOption]?,
-					   timeout: TimeInterval = 10) async throws -> NativeAd {
+	public func loadAd(
+		adUnitID: String,
+		from viewController: UIViewController?,
+		options: [NativeAdClient.AnyAdLoaderOption]?,
+		timeout: TimeInterval = 10
+	) async throws -> NativeAd {
 		return try await withCheckedThrowingContinuation { continuation in
 			let requestID = UUID()
 			let request = Request()
@@ -35,10 +37,12 @@ extension NativeAdManager {
 				loaderOptions = options.map { $0.unwrapped.toGADAdLoaderOptions() }
 			}
 			
-			let adLoader = AdLoader(adUnitID: adUnitID,
-									rootViewController: viewController,
-									adTypes: [.native],
-									options: loaderOptions)
+			let adLoader = AdLoader(
+				adUnitID: adUnitID,
+				rootViewController: viewController,
+				adTypes: [.native],
+				options: loaderOptions
+			)
 			adLoader.delegate = self
 			
 			let timeoutTask = DispatchWorkItem { [weak self] in
@@ -163,11 +167,13 @@ private final class AdRequestContext: @unchecked Sendable {
 	let continuation: CheckedContinuation<NativeAd, Error>
 	let timeoutTask: DispatchWorkItem
 
-	init(id: UUID,
-		 adUnitID: String,
-		 adLoader: AdLoader,
-		 continuation: CheckedContinuation<NativeAd, Error>,
-		 timeoutTask: DispatchWorkItem) {
+	init(
+		id: UUID,
+		adUnitID: String,
+		adLoader: AdLoader,
+		continuation: CheckedContinuation<NativeAd, Error>,
+		timeoutTask: DispatchWorkItem
+	) {
 		self.id = id
 		self.adUnitID = adUnitID
 		self.adLoader = adLoader

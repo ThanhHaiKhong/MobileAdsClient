@@ -22,8 +22,16 @@ final internal actor NativeActor {
 
 extension NativeActor {
     
-	public func loadAd(adUnitID: String, from viewController: UIViewController?, options: [NativeAdClient.AnyAdLoaderOption]?) async throws -> NativeAd {
-        return try await manager.loadAd(adUnitID: adUnitID, from: viewController, options: options)
+	public func loadAd(
+		adUnitID: String,
+		from viewController: UIViewController?,
+		options: [NativeAdClient.AnyAdLoaderOption]?
+	) async throws -> NativeAd {
+        return try await manager.loadAd(
+			adUnitID: adUnitID,
+			from: viewController,
+			options: options
+		)
     }
 }
 #endif
