@@ -5,6 +5,7 @@
 //  Created by Thanh Hai Khong on 7/2/25.
 //
 
+#if canImport(UIKit)
 import GoogleMobileAds
 import SwiftUI
 
@@ -221,6 +222,7 @@ public struct BannerLayer: Sendable, Equatable {
 
 public struct BannerPadding: Sendable, Equatable {
     public let edgeInsets: EdgeInsets
-    
+
     public static let none: BannerPadding = .init(edgeInsets: EdgeInsets(top: .zero, leading: .zero, bottom: .zero, trailing: .zero))
 }
+#endif

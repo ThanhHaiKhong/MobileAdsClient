@@ -16,10 +16,21 @@ extension DependencyValues {
 
 extension MobileAdsClient: TestDependencyKey {
     public static let testValue: MobileAdsClient = {
-        return Self()
+        return Self(
+            requestTrackingAuthorizationIfNeeded: { },
+            shouldShowAd: { _, _ in true },
+            showAd: { }
+        )
     }()
-    
+
     public static let previewValue: MobileAdsClient = {
-        return Self()
+        return Self(
+            requestTrackingAuthorizationIfNeeded: { },
+            shouldShowAd: { _, _ in true },
+            showAd: {
+                // Simulate ad display delay for previews
+                try await Task.sleep(nanoseconds: 1_000_000_000)
+            }
+        )
     }()
 }

@@ -9,12 +9,13 @@ import Foundation
 
 extension MobileAdsClient {
 	public struct AdRule: Sendable, Identifiable, Equatable, CustomStringConvertible {
-		public let id: String = UUID().uuidString
+		public let id: String
 		public let name: String
 		public let priority: Int
 		public let evaluate: @Sendable () async -> Bool
-		
+
 		public init(name: String, priority: Int = 0, evaluate: @escaping @Sendable () async -> Bool) {
+			self.id = UUID().uuidString
 			self.name = name
 			self.priority = priority
 			self.evaluate = evaluate
@@ -76,13 +77,17 @@ extension MobileAdsClient {
 
 extension Array where Element == MobileAdsClient.AdRule {
 	public func allRulesSatisfied() async -> Bool {
-		await withTaskGroup(of: Bool.self) { group in
-			for rule in self {
+		// Sort by priority (higher priority first) for better performance
+		// Higher priority rules are more likely to fail fast
+		let sortedRules = self.sorted { $0.priority > $1.priority }
+
+		return await withTaskGroup(of: Bool.self) { group in
+			for rule in sortedRules {
 				group.addTask {
 					await rule.evaluate()
 				}
 			}
-			
+
 			for await result in group {
 				if !result {
 					group.cancelAll()

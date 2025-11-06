@@ -5,6 +5,7 @@
 //  Created by Thanh Hai Khong on 17/2/25.
 //
 
+#if canImport(UIKit)
 import UIKit
 
 public extension UIImage {
@@ -12,3 +13,4 @@ public extension UIImage {
         return UIImage(named: named, in: Bundle.module, compatibleWith: nil)
     }
 }
+#endif

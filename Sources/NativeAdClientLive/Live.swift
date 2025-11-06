@@ -5,6 +5,7 @@
 //  Created by Thanh Hai Khong on 13/2/25.
 //
 
+#if canImport(UIKit)
 import ComposableArchitecture
 import NativeAdClient
 
@@ -18,3 +19,4 @@ extension NativeAdClient: DependencyKey {
         )
     }()
 }
+#endif

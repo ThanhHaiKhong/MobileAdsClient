@@ -5,6 +5,7 @@
 //  Created by Thanh Hai Khong on 23/6/25.
 //
 
+#if canImport(UIKit)
 import UIKit
 
 public class PaddedLabel: UILabel {
@@ -39,3 +40,4 @@ public class PaddedLabel: UILabel {
 		}
 	}
 }
+#endif

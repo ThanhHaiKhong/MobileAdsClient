@@ -5,6 +5,7 @@
 //  Created by Thanh Hai Khong on 6/2/25.
 //
 
+#if canImport(UIKit)
 @preconcurrency import GoogleMobileAds
 import ComposableArchitecture
 import TCAInitializableReducer
@@ -82,6 +83,7 @@ public struct Native: TCAInitializableReducer, Sendable {
             }
         }
     }
-        
+
     public init() { }
 }
+#endif

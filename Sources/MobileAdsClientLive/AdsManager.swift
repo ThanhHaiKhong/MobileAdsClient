@@ -5,6 +5,7 @@
 //  Created by Thanh Hai Khong on 4/2/25.
 //
 
+#if canImport(UIKit)
 import GoogleMobileAds
 import MobileAdsClient
 
@@ -25,25 +26,30 @@ final internal actor AdsManager {
 
 extension AdsManager {
     internal func shouldShowAd(_ adType: MobileAdsClient.AdType, rules: [MobileAdsClient.AdRule]) async -> Bool {
-        lastAdType = adType
-        
+        let shouldShow: Bool
+
         switch adType {
         case let .appOpen(adUnitID):
-            return await openAdManager.shouldShowAd(adUnitID, rules: rules)
-            
+            shouldShow = await openAdManager.shouldShowAd(adUnitID, rules: rules)
+
         case let .interstitial(adUnitID):
-            return await interstitialAdManager.shouldShowAd(adUnitID, rules: rules)
-            
+            shouldShow = await interstitialAdManager.shouldShowAd(adUnitID, rules: rules)
+
         case let .rewarded(adUnitID):
-            return await rewardedAdManager.shouldShowAd(adUnitID, rules: rules)
+            shouldShow = await rewardedAdManager.shouldShowAd(adUnitID, rules: rules)
         }
+
+        // Only store the ad type if it will actually be shown
+        if shouldShow {
+            lastAdType = adType
+        }
+
+        return shouldShow
     }
     
     @MainActor
     internal func showAd() async throws {
-        guard let rootVC = UIApplication.shared.topViewController(),
-              let adType = await lastAdType
-        else {
+        guard let rootVC = UIApplication.shared.topViewController(), let adType = await lastAdType else {
             return
         }
         
@@ -57,7 +63,8 @@ extension AdsManager {
         case let .rewarded(adUnitID):
             try await rewardedAdManager.showAd(adUnitID, from: rootVC)
         }
-        
+
         debugPrint("👉 The \(adType.description) ad has been closed, proceeding with the next action!")
     }
 }
+#endif

@@ -5,6 +5,7 @@
 //  Created by Thanh Hai Khong on 17/2/25.
 //
 
+#if canImport(UIKit)
 import GoogleMobileAds
 import UIKit
 
@@ -415,3 +416,4 @@ extension CustomNativeAdView {
         return totalHeight
     }
 }
+#endif

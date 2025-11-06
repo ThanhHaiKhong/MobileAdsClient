@@ -5,6 +5,7 @@
 //  Created by Thanh Hai Khong on 17/2/25.
 //
 
+#if canImport(UIKit)
 import UIKit
 import ObjectiveC
 
@@ -70,3 +71,4 @@ extension UIView {
 			.forEach { $0.removeFromSuperview() }
 	}
 }
+#endif

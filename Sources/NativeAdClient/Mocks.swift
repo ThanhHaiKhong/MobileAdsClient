@@ -6,6 +6,7 @@
 //
 
 import Dependencies
+#if canImport(UIKit)
 
 extension DependencyValues {
 	public var nativeAdClient: NativeAdClient {
@@ -18,8 +19,9 @@ extension NativeAdClient: TestDependencyKey {
     public static let testValue: NativeAdClient = {
         return Self()
     }()
-    
+
     public static let previewValue: NativeAdClient = {
         return Self()
     }()
 }
+#endif

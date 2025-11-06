@@ -6,12 +6,13 @@
 //
 
 import Foundation
+#if canImport(UIKit)
 import GoogleMobileAds
 
 // MARK: - AdChoicesOptions
 
 extension NativeAdClient {
-	
+
 	public protocol AdLoaderOption: Sendable, Equatable {
 		func toGADAdLoaderOptions() -> GADAdLoaderOptions
 	}
@@ -145,5 +146,6 @@ extension NativeAdClient {
 }
 
 extension NativeAd: @retroactive @unchecked Sendable {
-	
+
 }
+#endif

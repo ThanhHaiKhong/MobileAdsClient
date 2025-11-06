@@ -5,6 +5,7 @@
 //  Created by Thanh Hai Khong on 4/2/25.
 //
 
+#if canImport(UIKit)
 import GoogleMobileAds
 import MobileAdsClient
 
@@ -102,5 +103,6 @@ extension InterstitialAdManager: FullScreenContentDelegate {
 }
 
 extension InterstitialAd: @retroactive @unchecked Sendable {
-    
+
 }
+#endif

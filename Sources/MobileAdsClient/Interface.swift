@@ -4,12 +4,13 @@
 import ComposableArchitecture
 import TCAInitializableReducer
 import Foundation
+#if canImport(UIKit)
 import UIKit
+#endif
 
 @DependencyClient
 public struct MobileAdsClient: Sendable {
     public var requestTrackingAuthorizationIfNeeded: @Sendable () async -> Void
-    public var isUserSubscribed: @Sendable () async -> Bool = { false }
 	public var shouldShowAd: @Sendable (_ adType: MobileAdsClient.AdType, _ rules: [MobileAdsClient.AdRule]) async -> Bool = { _, _ in false }
     public var showAd: @Sendable () async throws -> Void
 }
@@ -31,8 +32,8 @@ extension Effect {
                 await escaped.yield {
                     do {
                         let adManager = DependencyValues._current.mobileAdsClient
-						if try await adManager.shouldShowAd(adType, rules) {
-							try await adManager.requestTrackingAuthorizationIfNeeded()
+						if await adManager.shouldShowAd(adType, rules) {
+							await adManager.requestTrackingAuthorizationIfNeeded()
 							try await adManager.showAd()
 							try await operation(send)
 						} else {
@@ -68,8 +69,8 @@ extension Effect {
 
 @Reducer
 public struct ItemWithAdReducer<Content: TCAInitializableReducer, Ad: TCAInitializableReducer>
-where Content.State: Identifiable ,
-      Ad.State: Identifiable {
+where Content.State: Identifiable, Content.State: Sendable,
+	  Ad.State: Identifiable, Ad.State: Sendable {
     
     @ObservableState
     public enum State: Identifiable {
@@ -120,7 +121,6 @@ extension ItemWithAdReducer.State: Equatable where Content.State: Equatable, Ad.
     }
 }
 
-
 extension ItemWithAdReducer.Action: Equatable where Content.Action: Equatable, Ad.Action: Equatable {
     public static func == (lhs: Self, rhs: Self) -> Bool {
         switch (lhs, rhs) {
@@ -144,6 +144,7 @@ extension ItemWithAdReducer: Sendable where Content: Sendable, Ad: Sendable { }
 
 // MARK: - UI Helpers
 
+#if canImport(UIKit)
 extension UIApplication {
     public func topViewController(controller: UIViewController? = nil) -> UIViewController? {
         let controller = controller ?? keyWindow?.rootViewController
@@ -157,7 +158,7 @@ extension UIApplication {
         }
         return controller
     }
-    
+
     public var keyWindow: UIWindow? {
         return connectedScenes
             .compactMap { $0 as? UIWindowScene }
@@ -165,3 +166,4 @@ extension UIApplication {
             .first { $0.isKeyWindow }
     }
 }
+#endif

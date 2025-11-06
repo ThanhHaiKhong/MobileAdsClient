@@ -1,10 +1,11 @@
 //
-//  RewardAdManager.swift
+//  RewardedAdManager.swift
 //  MobileAdsClient
 //
 //  Created by Thanh Hai Khong on 4/2/25.
 //
 
+#if canImport(UIKit)
 import GoogleMobileAds
 import MobileAdsClient
 
@@ -96,5 +97,6 @@ extension RewardedAdManager: FullScreenContentDelegate {
 }
 
 extension RewardedAd: @retroactive @unchecked Sendable {
-    
+
 }
+#endif

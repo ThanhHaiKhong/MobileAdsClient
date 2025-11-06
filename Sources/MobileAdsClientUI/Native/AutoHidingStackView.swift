@@ -5,6 +5,7 @@
 //  Created by Thanh Hai Khong on 23/6/25.
 //
 
+#if canImport(UIKit)
 import UIKit
 
 public class AutoHidingStackView: UIStackView {
@@ -74,3 +75,4 @@ public class AutoHidingStackView: UIStackView {
 		observations.forEach { $0.observation.invalidate() }
 	}
 }
+#endif

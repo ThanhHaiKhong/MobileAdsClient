@@ -5,6 +5,7 @@
 //  Created by Thanh Hai Khong on 6/2/25.
 //
 
+#if canImport(UIKit)
 import ComposableArchitecture
 import TCAInitializableReducer
 import GoogleMobileAds
@@ -61,6 +62,7 @@ public struct Banner: TCAInitializableReducer, Sendable {
             }
         }
     }
-        
+
     public init() { }
 }
+#endif

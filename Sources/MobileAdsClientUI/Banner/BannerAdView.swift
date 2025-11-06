@@ -5,6 +5,7 @@
 //  Created by Thanh Hai Khong on 6/2/25.
 //
 
+#if canImport(UIKit)
 import ComposableArchitecture
 import GoogleMobileAds
 import SwiftUI
@@ -90,3 +91,4 @@ public struct BannerAdView: UIViewRepresentable {
         }
     }
 }
+#endif

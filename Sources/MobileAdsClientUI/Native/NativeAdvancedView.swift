@@ -5,6 +5,7 @@
 //  Created by Thanh Hai Khong on 24/6/25.
 //
 
+#if canImport(UIKit)
 import GoogleMobileAds
 import UIKit
 
@@ -408,3 +409,4 @@ extension NativeAdvancedView {
 		updateVisibility(for: nativeAd)
 	}
 }
+#endif

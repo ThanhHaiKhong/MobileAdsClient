@@ -5,6 +5,7 @@
 //  Created by Thanh Hai Khong on 13/2/25.
 //
 
+#if canImport(UIKit)
 @preconcurrency import GoogleMobileAds
 import NativeAdClient
 import UIKit
@@ -173,3 +174,4 @@ private final class AdRequestContext {
 		self.timeoutTask = timeoutTask
 	}
 }
+#endif
