@@ -293,7 +293,7 @@ extension CustomNativeAdView {
 		guard aspectRatio > 0 else {
 			return
 		}
-        print("ASPECT_RATIO: \(aspectRatio)")
+        
         heightConstraint.isActive = false
         heightConstraint = NSLayoutConstraint(
             item: contentView,
