@@ -11,7 +11,7 @@ import GoogleMobileAds
 import SwiftUI
 
 public struct BannerAdView: UIViewRepresentable {
-    private let store: StoreOf<Banner>
+	@Perception.Bindable private var store: StoreOf<Banner>
     
     public init(store: StoreOf<Banner>) {
         self.store = store

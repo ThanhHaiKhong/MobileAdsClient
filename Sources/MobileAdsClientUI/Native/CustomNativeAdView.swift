@@ -10,7 +10,7 @@ import GoogleMobileAds
 import UIKit
 
 public class CustomNativeAdView: NativeAdView {
-    
+
     private var heightConstraint: NSLayoutConstraint!
     private var currentMultiplier: CGFloat = 9.0 / 16.0
     private let defaultSpacing: CGFloat = 16
@@ -18,8 +18,9 @@ public class CustomNativeAdView: NativeAdView {
     private lazy var adContainerView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.layer.cornerRadius = 5
+        view.layer.cornerRadius = 0
         view.layer.masksToBounds = true
+		view.clipsToBounds = true
         view.backgroundColor = UIColor(red: 122 / 255, green: 159 / 255, blue: 126 / 255, alpha: 1)
         
         return view
@@ -30,7 +31,7 @@ public class CustomNativeAdView: NativeAdView {
         label.accessibilityIdentifier = "Ad Headline Label"
         label.translatesAutoresizingMaskIntoConstraints = false
         label.numberOfLines = 0
-        label.font = .boldSystemFont(ofSize: 18)
+		label.font = .preferredFont(forTextStyle: .headline)
         label.textColor = UIColor(red: 66 / 255, green: 66 / 255, blue: 66 / 255, alpha: 1)
         label.text = "Ad Headline"
         
@@ -44,7 +45,7 @@ public class CustomNativeAdView: NativeAdView {
         label.numberOfLines = 0
         label.textColor = .secondaryLabel
         label.text = "Ad Sponsor"
-        label.font = .systemFont(ofSize: 14, weight: .medium)
+		label.font = .preferredFont(forTextStyle: .subheadline)
         
         return label
     }()
@@ -59,7 +60,7 @@ public class CustomNativeAdView: NativeAdView {
         label.backgroundColor = .systemBlue
         label.layer.cornerRadius = 5
         label.layer.masksToBounds = true
-        label.font = .systemFont(ofSize: 13, weight: .semibold)
+		label.font = .preferredFont(forTextStyle: .footnote)
         
         return label
     }()
@@ -69,7 +70,7 @@ public class CustomNativeAdView: NativeAdView {
         imageView.accessibilityIdentifier = "Ad Icon Image View"
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.contentMode = .scaleAspectFill
-        imageView.layer.cornerRadius = 10
+        imageView.layer.cornerRadius = 5
         imageView.layer.masksToBounds = true
         
         return imageView
@@ -91,8 +92,8 @@ public class CustomNativeAdView: NativeAdView {
         button.setTitle("Install Now", for: .normal)
         button.backgroundColor = .systemBlue
         button.setTitleColor(.white, for: .normal)
-        button.titleLabel?.font = .boldSystemFont(ofSize: 18)
-        button.layer.cornerRadius = 10
+		button.titleLabel?.font = .preferredFont(forTextStyle: .title3)
+        button.layer.cornerRadius = 5
         button.layer.masksToBounds = true
         button.isUserInteractionEnabled = false
         
@@ -104,7 +105,7 @@ public class CustomNativeAdView: NativeAdView {
         label.accessibilityIdentifier = "Ad Body Label"
         label.translatesAutoresizingMaskIntoConstraints = false
         label.numberOfLines = 0
-        label.font = .systemFont(ofSize: 15, weight: .medium)
+		label.font = .preferredFont(forTextStyle: .callout)
         label.textAlignment = .left
         label.textColor = .secondaryLabel
         
@@ -119,7 +120,7 @@ public class CustomNativeAdView: NativeAdView {
         label.textColor = .white
         label.textAlignment = .center
         label.backgroundColor = .systemGreen
-        label.font = .systemFont(ofSize: 13, weight: .semibold)
+		label.font = .preferredFont(forTextStyle: .subheadline)
         label.text = "App Store"
         label.layer.cornerRadius = 5
         label.layer.masksToBounds = true
@@ -134,7 +135,7 @@ public class CustomNativeAdView: NativeAdView {
         label.numberOfLines = 0
         label.textColor = .white
         label.textAlignment = .center
-        label.font = .systemFont(ofSize: 13, weight: .semibold)
+        label.font = .preferredFont(forTextStyle: .subheadline)
         label.text = "Free"
         label.layer.cornerRadius = 5
         label.layer.masksToBounds = true
@@ -162,6 +163,12 @@ public class CustomNativeAdView: NativeAdView {
         
         return stack
     }()
+	
+	private lazy var emptyView: UIView = {
+		let view = UIView()
+		view.backgroundColor = .purple
+		return view
+	}()
     
     public override init(frame: CGRect) {
         super.init(frame: frame)
@@ -178,7 +185,7 @@ public class CustomNativeAdView: NativeAdView {
 extension CustomNativeAdView {
     private func setupViews() {
         addBlur(style: .dark)
-        layer.cornerRadius = 5
+        layer.cornerRadius = 0
         layer.masksToBounds = true
         
         let storeStack = AutoHidingStackView()
@@ -239,19 +246,25 @@ extension CustomNativeAdView {
             adContainerView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
             adContainerView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
             adContainerView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8),
-            
+
             contentView.topAnchor.constraint(equalTo: adContainerView.topAnchor),
             contentView.leadingAnchor.constraint(equalTo: adContainerView.leadingAnchor),
             contentView.trailingAnchor.constraint(equalTo: adContainerView.trailingAnchor),
-            
+
             bodyStack.topAnchor.constraint(equalTo: contentView.bottomAnchor, constant: defaultSpacing),
-            bodyStack.leadingAnchor.constraint(equalTo: adContainerView.leadingAnchor, constant: 20),
-            bodyStack.trailingAnchor.constraint(equalTo: adContainerView.trailingAnchor, constant: -20),
-            
+            bodyStack.leadingAnchor.constraint(equalTo: adContainerView.leadingAnchor, constant: 16),
+            bodyStack.trailingAnchor.constraint(equalTo: adContainerView.trailingAnchor, constant: -16),
+
+			headlineStack.leadingAnchor.constraint(equalTo: bodyStack.leadingAnchor),
+			headlineStack.trailingAnchor.constraint(equalTo: bodyStack.trailingAnchor),
+
+			adBodyLabel.leadingAnchor.constraint(equalTo: bodyStack.leadingAnchor),
+			adBodyLabel.trailingAnchor.constraint(equalTo: bodyStack.trailingAnchor),
+
             actionButton.leadingAnchor.constraint(equalTo: bodyStack.leadingAnchor),
             actionButton.trailingAnchor.constraint(equalTo: bodyStack.trailingAnchor),
-            actionButton.heightAnchor.constraint(equalToConstant: 46),
-            
+            actionButton.heightAnchor.constraint(equalToConstant: 44),
+
             adIconImageView.widthAnchor.constraint(equalToConstant: 80),
             adIconImageView.heightAnchor.constraint(equalToConstant: 80),
         ])
@@ -266,15 +279,21 @@ extension CustomNativeAdView {
         updateUI(with: nativeAd)
         updateViewBindings(for: nativeAd)
         updateVisibility(for: nativeAd)
-        
+
         self.nativeAd = nativeAd
+
+        // Force layout update to recalculate all component heights after data changes
+        setNeedsLayout()
+        layoutIfNeeded()
     }
 
     // MARK: - Update Aspect Ratio
     
     private func updateAspectRatio(for aspectRatio: CGFloat) {
-        guard aspectRatio > 0, aspectRatio != currentMultiplier else { return }
-        
+		guard aspectRatio > 0 else {
+			return
+		}
+        print("ASPECT_RATIO: \(aspectRatio)")
         heightConstraint.isActive = false
         heightConstraint = NSLayoutConstraint(
             item: contentView,
@@ -296,7 +315,7 @@ extension CustomNativeAdView {
     }
 
     // MARK: - Update UI Elements
-    
+
     private func updateUI(with nativeAd: NativeAd) {
         let viewsToAnimate: [UIView] = [
             adIconImageView,
@@ -317,18 +336,24 @@ extension CustomNativeAdView {
                     self.adIconImageView.image = nativeAd.icon?.image
                 case self.adHeadlineLabel:
                     self.adHeadlineLabel.text = nativeAd.headline?.capitalized
+                    self.adHeadlineLabel.invalidateIntrinsicContentSize()
                 case self.adRatingImageView:
                     self.adRatingImageView.image = self.imageOfStars(from: nativeAd.starRating)
                 case self.adSponsorLabel:
                     self.adSponsorLabel.text = nativeAd.advertiser
+                    self.adSponsorLabel.invalidateIntrinsicContentSize()
                 case self.adStoreLabel:
                     self.adStoreLabel.text = nativeAd.store?.capitalized
+                    self.adStoreLabel.invalidateIntrinsicContentSize()
                 case self.adPriceLabel:
                     self.adPriceLabel.text = nativeAd.price?.capitalized
+                    self.adPriceLabel.invalidateIntrinsicContentSize()
                 case self.adBodyLabel:
                     self.adBodyLabel.text = nativeAd.body
+                    self.adBodyLabel.invalidateIntrinsicContentSize()
                 case self.actionButton:
                     self.actionButton.setTitle(nativeAd.callToAction?.uppercased(), for: .normal)
+                    self.actionButton.invalidateIntrinsicContentSize()
                 case self.contentView:
                     self.contentView.mediaContent = nativeAd.mediaContent
                     self.contentView.contentMode = .scaleAspectFit
@@ -401,18 +426,17 @@ extension CustomNativeAdView {
     }
     
     // MARK: - Calculate Total Height
-    
+
     public func calculateTotalHeight() -> CGFloat {
-        let bottomPadding: CGFloat = 20
-        let verticalPadding: CGFloat = 16
+        // Force layout to ensure all component heights are updated
+        layoutIfNeeded()
+
         let contentHeight = contentView.frame.height
         let headlineHeight = headlineStack.frame.height
         let bodyHeight = adBodyLabel.frame.height
         let buttonHeight = actionButton.frame.height
-        let totalHeight = contentHeight + headlineHeight + bodyHeight + buttonHeight + defaultSpacing * 3 + bottomPadding + verticalPadding
-		#if DEBUG
-			print("✅ Total height: \(totalHeight) - Body height: \(bodyHeight) - Media height: \(contentHeight)")
-		#endif
+        let totalHeight = contentHeight + headlineHeight + bodyHeight + buttonHeight + 8 + defaultSpacing * 4
+
         return totalHeight
     }
 }
