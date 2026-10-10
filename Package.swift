@@ -37,7 +37,7 @@ let package = Package(
     // own while AdRevenueClient's published versions still depend on it
     // unconditionally — see the AdRevenueClient entry below.
     traits: [
-        .default(enabledTraits: []),
+        .default(enabledTraits: ["Funnel"]),
         Trait(
             name: funnelTrait,
             description: "Conform MobileAdsClient to FunnelClient's Ad port."
