@@ -65,7 +65,7 @@ extension PaidEventCapable {
 /// everything else → pool** — so the storage/retry/buffer details live in the
 /// source types, and this class keeps only what is genuinely its job:
 /// presentation/continuation bookkeeping, the `FullScreenContentDelegate`
-/// dismiss/fail handlers, revenue attachment, and post-dismiss reload.
+/// dismiss/fail handlers, and revenue attachment.
 ///
 /// Subclasses override `loadAd`, `adTypeName`, `presentAd`, set `format`, and —
 /// to opt into Google preload — set `supportsGooglePreload` and the four
@@ -123,20 +123,12 @@ class BaseAdManager<AdType: FullScreenPresentingAd & Sendable>: NSObject, FullSc
     /// Units the host registered for the Google Preloader (always keyword-less).
     private var registeredPreloadUnits: Set<String> = []
 
-    /// Keywords from the latest **show request** per unit, used by the
-    /// post-dismiss reload so the pool reloads toward what was last asked for
-    /// (not whatever a fallback ad happened to carry).
-    private var requestedKeywordsByUnit: [String: [String]] = [:]
-
     /// In-flight `showAd` continuation for a presented ad, keyed by the
     /// presented ad object's identity (not the unit) so a concurrent
     /// pool/buffer change can't orphan it.
     private struct Presentation {
         let adUnitID: String
         let continuation: CheckedContinuation<Void, Error>
-        /// When true, the post-dismiss auto-warm is skipped — the caller supplied
-        /// an `onComplete` handler and owns the preload decision for this show.
-        let suppressReload: Bool
         /// Set by the SDK's will-present callback; the present watchdog only
         /// abandons a presentation that never reached the screen.
         var hasAppeared = false
@@ -180,21 +172,6 @@ class BaseAdManager<AdType: FullScreenPresentingAd & Sendable>: NSObject, FullSc
         registeredPreloadUnits.remove(adUnitID)
     }
 
-    private func rememberRequestedKeywords(
-        _ adUnitID: String,
-        _ keywords: [String]
-    ) {
-        stateLock.lock()
-        defer { stateLock.unlock() }
-        requestedKeywordsByUnit[adUnitID] = keywords
-    }
-
-    private func rememberedKeywords(for adUnitID: String) -> [String] {
-        stateLock.lock()
-        defer { stateLock.unlock() }
-        return requestedKeywordsByUnit[adUnitID] ?? []
-    }
-
     /// True when a request should be served by Google's preloader: the format
     /// supports it, the unit was registered, and the keywords are empty (the
     /// preloader's `Request` is frozen at registration — no per-show keywords).
@@ -210,26 +187,20 @@ class BaseAdManager<AdType: FullScreenPresentingAd & Sendable>: NSObject, FullSc
     // MARK: - Presentation bookkeeping
 
     /// Registers the `showAd` continuation against the exact ad object about to
-    /// be presented, and starts loading its replacement while it is on screen —
-    /// so the next request for the unit (typically a back-to-back rewarded
-    /// watch) finds an ad ready instead of waiting on a load that only began at
-    /// dismiss. The ad's identity — not the unit string — is the key, so a later
-    /// cache/buffer change can't orphan it. Arms the present watchdog.
+    /// be presented. The ad's identity — not the unit string — is the key, so a
+    /// later cache/buffer change can't orphan it. Arms the present watchdog.
     final func beginPresentation(
         _ continuation: CheckedContinuation<Void, Error>,
         for ad: AdType,
-        adUnitID: String,
-        suppressReload: Bool
+        adUnitID: String
     ) {
         let presentation = Presentation(
             adUnitID: adUnitID,
-            continuation: continuation,
-            suppressReload: suppressReload
+            continuation: continuation
         )
         stateLock.lock()
         presentations[ObjectIdentifier(ad)] = presentation
         stateLock.unlock()
-        refillPool(replacing: presentation, moment: "while presenting")
         armPresentWatchdog(for: ObjectIdentifier(ad))
     }
 
@@ -248,7 +219,6 @@ class BaseAdManager<AdType: FullScreenPresentingAd & Sendable>: NSObject, FullSc
             guard let self, let presentation = self.removeUnappearedPresentation(adID) else { return }
             self.logPool("present watchdog fired: no present/fail callback · unit=\(presentation.adUnitID)")
             presentation.continuation.resume(throwing: MobileAdsClient.AdError.adNotReady)
-            self.refillPool(replacing: presentation, moment: "after present timeout")
         }
     }
 
@@ -441,8 +411,6 @@ class BaseAdManager<AdType: FullScreenPresentingAd & Sendable>: NSObject, FullSc
         slotRef: String = "",
         onColdLoad: (@Sendable (AdLoadPhase) -> Void)? = nil
     ) async -> AdType? {
-        rememberRequestedKeywords(adUnitID, keywords)
-
         let ad: AdType?
         if usesGoogle(adUnitID, keywords: keywords), let googleAd = googleSource.acquire(adUnitID) {
             logPool("show: GOOGLE preloaded · unit=\(adUnitID)")
@@ -470,7 +438,6 @@ class BaseAdManager<AdType: FullScreenPresentingAd & Sendable>: NSObject, FullSc
         keywords: [String] = [],
         featureID: String = "",
         slotRef: String = "",
-        suppressAutoReload: Bool = false,
         onColdLoad: (@Sendable (AdLoadPhase) -> Void)? = nil
     ) async throws {
         guard
@@ -486,7 +453,7 @@ class BaseAdManager<AdType: FullScreenPresentingAd & Sendable>: NSObject, FullSc
         }
 
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            beginPresentation(continuation, for: ad, adUnitID: adUnitID, suppressReload: suppressAutoReload)
+            beginPresentation(continuation, for: ad, adUnitID: adUnitID)
             presentAd(ad, from: viewController)
         }
     }
@@ -504,7 +471,6 @@ class BaseAdManager<AdType: FullScreenPresentingAd & Sendable>: NSObject, FullSc
     func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
         guard let presentation = removePresentation(for: ad) else { return }
         presentation.continuation.resume(returning: ())
-        refillPool(replacing: presentation, moment: "after dismiss")
     }
 
     @objc
@@ -514,35 +480,7 @@ class BaseAdManager<AdType: FullScreenPresentingAd & Sendable>: NSObject, FullSc
     ) {
         guard let presentation = removePresentation(for: ad) else { return }
         presentation.continuation.resume(throwing: error)
-        refillPool(replacing: presentation, moment: "after failed present")
     }
 
-    /// Reloads the ad a presentation consumed. Runs when the presentation begins
-    /// and again when it ends; the second call reuses or joins the first load,
-    /// and retries it if that load failed. Google units self-refill in the SDK,
-    /// so this only reloads the pool — using the unit's remembered request
-    /// keywords so the pool reloads toward what was last asked for. `moment`
-    /// only labels the log line.
-    private func refillPool(
-        replacing presentation: Presentation,
-        moment: String
-    ) {
-        let adUnitID = presentation.adUnitID
-        // Caller supplied an onComplete handler → it owns the post-show preload
-        // decision for this show; skip the built-in auto-warm.
-        if presentation.suppressReload {
-            logPool("reload: suppressed (caller onComplete owns it) · unit=\(adUnitID)")
-            return
-        }
-        let keywords = rememberedKeywords(for: adUnitID)
-        if usesGoogle(adUnitID, keywords: keywords) {
-            logPool("reload: google self-refills (no-op) · unit=\(adUnitID)")
-            return
-        }
-        logPool("reload: pool · unit=\(adUnitID) · keywords=\(keywords) (\(moment))")
-        Task { [weak self] in
-            _ = await self?.pooledSource.warm(adUnitID, keywords: keywords)
-        }
-    }
 }
 #endif

@@ -108,7 +108,6 @@ final internal class RewardedAdManager: BaseAdManager<RewardedAd>, @unchecked Se
         keywords: [String] = [],
         featureID: String = "",
         slotRef: String = "",
-        suppressAutoReload: Bool = false,
         onColdLoad: (@Sendable (AdLoadPhase) -> Void)? = nil
     ) async throws -> Bool {
         guard
@@ -126,7 +125,7 @@ final internal class RewardedAdManager: BaseAdManager<RewardedAd>, @unchecked Se
         pendingReward.withLock { $0[adUnitID] = false }
 
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            beginPresentation(continuation, for: ad, adUnitID: adUnitID, suppressReload: suppressAutoReload)
+            beginPresentation(continuation, for: ad, adUnitID: adUnitID)
             ad.present(from: viewController) { [weak self] in
                 self?.pendingReward.withLock { $0[adUnitID] = true }
             }

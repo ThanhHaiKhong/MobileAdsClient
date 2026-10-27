@@ -70,9 +70,6 @@ extension AdsManager {
         }
 
         let onColdLoad = Self.makeColdLoadEmitter(for: adType)
-        // A supplied handler takes over the post-dismiss preload decision, so the
-        // managers skip their built-in auto-warm for this show.
-        let suppress = onComplete != nil
 
         let outcome: MobileAdsClient.AdOutcome
         switch adType {
@@ -83,7 +80,6 @@ extension AdsManager {
                     keywords: keywords,
                     featureID: requester.featureID,
                     slotRef: requester.slotRef,
-                    suppressAutoReload: suppress,
                     onColdLoad: onColdLoad
                 )
                 outcome = .presented
@@ -95,7 +91,6 @@ extension AdsManager {
                     keywords: keywords,
                     featureID: requester.featureID,
                     slotRef: requester.slotRef,
-                    suppressAutoReload: suppress,
                     onColdLoad: onColdLoad
                 )
                 outcome = .presented
@@ -109,7 +104,6 @@ extension AdsManager {
                     keywords: keywords,
                     featureID: requester.featureID,
                     slotRef: requester.slotRef,
-                    suppressAutoReload: suppress,
                     onColdLoad: onColdLoad
                 )
                 outcome = earned ? .rewardEarned : .rewardNotEarned
