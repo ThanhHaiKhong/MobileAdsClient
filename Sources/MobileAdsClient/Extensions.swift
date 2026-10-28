@@ -9,7 +9,6 @@ import UIKit
 extension Effect {
     public static func runWithAdCheck(
         adType: MobileAdsClient.AdType,
-        rules: [MobileAdsClient.AdRule] = [],
         priority: TaskPriority? = nil,
         operation: @escaping @Sendable (_ send: Send<Action>) async throws -> Void,
         catch handler: (@Sendable (_ error: any Error, _ send: Send<Action>) async -> Void)? = nil,
@@ -23,7 +22,7 @@ extension Effect {
                 await escaped.yield {
                     do {
                         let adManager = DependencyValues._current.mobileAdsClient
-                        if await adManager.shouldShowFullScreenAd(adType, rules) {
+                        if await adManager.shouldShowFullScreenAd(adType) {
                             try await adManager.showFullScreenAd(adType)
                         }
                         try await operation(send)
@@ -87,10 +86,9 @@ extension Effect {
 extension MobileAdsClient {
     /// Convenience: gate `adType` with no contextual keywords.
     public func shouldShowFullScreenAd(
-        _ adType: AdType,
-        _ rules: [AdRule]
+        _ adType: AdType
     ) async -> Bool {
-        await shouldShowFullScreenAd(adType, rules, [])
+        await shouldShowFullScreenAd(adType, [])
     }
 
     /// Convenience: presents `adType` with no contextual keywords, no completion.

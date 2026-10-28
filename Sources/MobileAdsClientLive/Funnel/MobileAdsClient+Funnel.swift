@@ -44,9 +44,9 @@ extension MobileAdsClient: FunnelClient.Mediation.Ads.Providing {
         guard let mobileAdType = MobileAdsClient.AdType.funnelAdType(adType, unitID: unitID) else {
             return false
         }
-        let rulesAllowShow = await shouldShowFullScreenAd(mobileAdType, [], [])
-        guard rulesAllowShow, case .nativeFullScreen = mobileAdType else {
-            return rulesAllowShow
+        let canShow = await shouldShowFullScreenAd(mobileAdType, [])
+        guard canShow, case .nativeFullScreen = mobileAdType else {
+            return canShow
         }
         return await NativeFullScreenPreloads.shared.warm(unitID)
     }

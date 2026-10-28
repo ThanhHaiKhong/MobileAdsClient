@@ -378,11 +378,8 @@ class BaseAdManager<AdType: FullScreenPresentingAd & Sendable>: NSObject, FullSc
     /// Readiness reflecting `showAd`'s serve-with-fallback behavior.
     public final func shouldShowAd(
         _ adUnitID: String,
-        rules: [MobileAdsClient.AdRule],
         keywords: [String] = []
     ) async -> Bool {
-        let isSatisfied = await rules.allRulesSatisfied()
-
         let ready: Bool
         if usesGoogle(adUnitID, keywords: keywords) {
             ready = googleSource.isAvailable(adUnitID)
@@ -395,8 +392,8 @@ class BaseAdManager<AdType: FullScreenPresentingAd & Sendable>: NSObject, FullSc
             logPool("shouldShowAd: NOT ready · unit=\(adUnitID) · keywords=\(keywords)")
             return false
         }
-        logPool("shouldShowAd: ready · unit=\(adUnitID) · keywords=\(keywords) · rulesSatisfied=\(isSatisfied)")
-        return isSatisfied
+        logPool("shouldShowAd: ready · unit=\(adUnitID) · keywords=\(keywords)")
+        return true
     }
 
     /// Picks the ad to present for `(unit, keywords)`, routing Google-managed

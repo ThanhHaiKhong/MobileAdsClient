@@ -3,7 +3,7 @@ import ComposableArchitecture
 @DependencyClient
 public struct MobileAdsClient: Sendable {
     public var shouldShowFullScreenAd:
-        @Sendable (_ adType: AdType, _ rules: [AdRule], _ keywords: [String]) async -> Bool = { _, _, _ in false }
+        @Sendable (_ adType: AdType, _ keywords: [String]) async -> Bool = { _, _ in false }
     public var showFullScreenAd:
         @Sendable (
             _ adType: AdType, _ keywords: [String], _ requester: AdRequester,

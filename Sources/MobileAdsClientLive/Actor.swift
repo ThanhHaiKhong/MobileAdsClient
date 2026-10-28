@@ -35,23 +35,23 @@ final internal actor AdsManager {
 extension AdsManager {
     internal func shouldShowAd(
         _ adType: MobileAdsClient.AdType,
-        rules: [MobileAdsClient.AdRule],
         keywords: [String] = []
     ) async -> Bool {
         switch adType {
             case let .appOpen(adUnitID):
-                return await openAdManager.shouldShowAd(adUnitID, rules: rules, keywords: keywords)
+                return await openAdManager.shouldShowAd(adUnitID, keywords: keywords)
 
             case let .interstitial(adUnitID):
-                return await interstitialAdManager.shouldShowAd(adUnitID, rules: rules, keywords: keywords)
+                return await interstitialAdManager.shouldShowAd(adUnitID, keywords: keywords)
 
             case let .rewarded(adUnitID):
-                return await rewardedAdManager.shouldShowAd(adUnitID, rules: rules, keywords: keywords)
+                return await rewardedAdManager.shouldShowAd(adUnitID, keywords: keywords)
 
             case .nativeFullScreen:
                 // Native loads on demand at show time — no pool/preload to gate
-                // readiness on, so readiness is just whether the rules pass.
-                return await rules.allRulesSatisfied()
+                // readiness on, so it is always presentable here; the actual
+                // native load is handled separately by `ensureLoaded`.
+                return true
         }
     }
 

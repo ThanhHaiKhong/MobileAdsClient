@@ -13,8 +13,8 @@ import MobileAdsClient
 extension MobileAdsClient: DependencyKey {
     public static let liveValue: Self = {
         return Self(
-            shouldShowFullScreenAd: { adType, rules, keywords in
-                await AdsManager.shared.shouldShowAd(adType, rules: rules, keywords: keywords)
+            shouldShowFullScreenAd: { adType, keywords in
+                await AdsManager.shared.shouldShowAd(adType, keywords: keywords)
             },
             showFullScreenAd: { adType, keywords, requester, onComplete in
                 try await AdsManager.shared.showAd(

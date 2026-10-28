@@ -59,53 +59,6 @@ extension MobileAdsClient {
         }
     }
 
-    public struct AdRule: Sendable, Identifiable, Equatable, CustomStringConvertible {
-        public let id: String
-        public let name: String
-        public let priority: Int
-        public let evaluate: @Sendable () async -> Bool
-
-        public init(
-            name: String,
-            priority: Int = 0,
-            evaluate: @escaping @Sendable () async -> Bool
-        ) {
-            self.id = UUID().uuidString
-            self.name = name
-            self.priority = priority
-            self.evaluate = evaluate
-        }
-
-        public static func == (
-            lhs: AdRule,
-            rhs: AdRule
-        ) -> Bool {
-            lhs.id == rhs.id
-        }
-
-        public var description: String {
-            """
-            AdRule {
-            	id: \(id)
-            	name: "\(name)"
-            	priority: \(priority)
-            }
-            """
-        }
-
-        public func detailedDescription() async -> String {
-            let result = await evaluate()
-            return """
-                AdRule {
-                	id: \(id)
-                	name: "\(name)"
-                	priority: \(priority)
-                	evaluate result: \(result ? "✅ Passed" : "❌ Failed")
-                }
-                """
-        }
-    }
-
     public enum AdType: Sendable, Equatable, CustomStringConvertible {
         case appOpen(AdUnitID)
         case interstitial(AdUnitID)
@@ -226,46 +179,6 @@ extension MobileAdsClient {
             switch self {
                 case .adNotReady: return "The ad is not ready to be shown."
             }
-        }
-    }
-}
-
-extension Array where Element == MobileAdsClient.AdRule {
-    public func allRulesSatisfied() async -> Bool {
-        // Sort by priority (higher priority first) for better performance
-        // Higher priority rules are more likely to fail fast
-        let sortedRules = self.sorted { $0.priority > $1.priority }
-
-        return await withTaskGroup(of: (index: Int, result: Bool).self) { group in
-            var nextIndex = 0
-            let batchSize = Swift.min(3, sortedRules.count)  // Process rules in small batches
-
-            // Add initial batch
-            for i in 0..<batchSize {
-                group.addTask {
-                    (index: i, result: await sortedRules[i].evaluate())
-                }
-            }
-            nextIndex = batchSize
-
-            for await (_, result) in group {
-                if !result {
-                    // Rule failed - cancel all and return false
-                    group.cancelAll()
-                    return false
-                }
-
-                // Rule passed - add next rule if available
-                if nextIndex < sortedRules.count {
-                    let currentIndex = nextIndex
-                    group.addTask {
-                        (index: currentIndex, result: await sortedRules[currentIndex].evaluate())
-                    }
-                    nextIndex += 1
-                }
-            }
-
-            return true
         }
     }
 }
